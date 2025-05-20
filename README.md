@@ -127,4 +127,4 @@ Naumenko Konstantin
 
 ## Repository
 
-github.com/whostolemysleep/nuxt-logging-to-file-plugin
+https://github.com/WhoStoleMySleep/nuxt-logging-to-file-plugin
