@@ -4,17 +4,16 @@
     "module": "NodeNext",
     "outDir": "dist",
     "declaration": true,
+    "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "strict": true,
     "moduleResolution": "nodenext",
-    "types": [
-      "@nuxt/kit",
-      "@nuxt/schema",
-      "@types/node"
-    ],
+    "types": ["@nuxt/kit", "@nuxt/schema", "@types/node"],
     "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmit": false,
+    "sourceMap": false
   },
-  "include": ["lib/**/*", "lib/types.d.ts"],
-  "exclude": ["node_modules"]
+  "include": ["lib/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

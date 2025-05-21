@@ -19,16 +19,13 @@ export default defineNuxtModule<ModuleOptions>({
   setup(options, nuxt) {
     const resolver = createResolver(import.meta.url);
 
-    // Register plugin
     addPlugin(resolver.resolve('./plugin.js'));
 
-    // Register server handler
     addServerHandler({
       route: options.apiEndpoint,
       handler: resolver.resolve('./server/api/logging.js')
     });
 
-    // Set runtimeConfig for client-side
     nuxt.options.runtimeConfig.public.logging = {
       ...options,
       apiEndpoint: options.apiEndpoint,
@@ -36,7 +33,6 @@ export default defineNuxtModule<ModuleOptions>({
       logPath: options.logPath
     };
 
-    // Set environment variables for server-side
     process.env.NUXT_PUBLIC_LOGGING_LOG_PATH = options.logPath;
     process.env.NUXT_PUBLIC_LOGGING_LOCALE = options.locale;
   }

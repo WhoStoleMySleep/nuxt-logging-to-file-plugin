@@ -1,18 +1,21 @@
 {
   "name": "nuxt-logging-to-file-plugin",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run clean && npm run build:types && npm run build:js",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:js": "esbuild lib/index.ts lib/plugin.ts lib/composables/useSaveLogs.ts lib/server/api/logging.ts --minify --platform=node --format=esm --outdir=dist --log-level=debug",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build"
-  },
   "peerDependencies": {
     "@nuxt/kit": "^3.17.3",
     "@nuxt/schema": "^3.17.3",
@@ -23,7 +26,8 @@
     "@nuxt/schema": "^3.17.3",
     "h3": "^1.12.0",
     "typescript": "^5.6.2",
-    "@types/node": "^22.7.4"
+    "@types/node": "^22.7.4",
+    "esbuild": "^0.23.0"
   },
   "keywords": [
     "nuxt",
