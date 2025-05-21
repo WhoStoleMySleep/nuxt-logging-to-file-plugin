@@ -1,18 +1,17 @@
 # Nuxt Logging to File Plugin
 
-A Nuxt 3 module for logging `console.warn`, `console.error`, and HTTP request errors to a server endpoint and saving them to files. Designed for client-side use (no SSR).
-
-**Note: SSR is not supported (`ssr: false` required).**
+A Nuxt 3 module for logging `console.warn`, `console.error`, HTTP request errors, and server-side errors to a server endpoint and saving them to files. Supports both client-side and Server-Side Rendering (SSR) modes.
 
 ## Features
 
-- Captures `console.warn` and `console.error` logs.
-- Tracks HTTP request errors (e.g., 404, 500, network failures) via `fetch`.
-- Sends logs to a configurable API endpoint.
-- Saves logs to files in a specified directory with locale-based date formatting.
-- Supports custom API endpoints, locales, and log paths.
+- Captures `console.warn` and `console.error` logs on the client.
+- Tracks HTTP request errors (e.g., 404, 500, network failures) via `fetch` on the client.
+- Logs server-side errors in SSR mode via Nitro middleware.
+- Sends logs to a configurable API endpoint and saves them to files in a specified directory.
+- Supports locale-based date formatting for log files (e.g., `logs/20.05.2025.txt`).
+- Configurable API endpoint, locale, and log path.
 - ESM-compatible with TypeScript support.
-- Lightweight and optimized for minimal bundle size (~8.25 kB unpacked).
+- Lightweight and optimized for minimal bundle size (~3-5 kB for `.js` files).
 
 ## Installation
 
@@ -34,19 +33,22 @@ export default defineNuxtConfig({
     locale: 'ru',
     logPath: './logs'
   },
-  ssr: false
+  ssr: true // or false, depending on your needs
 });
 ```
 
 2. Trigger logs in your application:
 
 ```javascript
-// Console logs
+// Console logs (client-side)
 console.error('Test error');
 console.warn('Test warning');
 
-// HTTP request error (e.g., failed API call)
+// HTTP request error (client-side)
 fetch('https://example.com/nonexistent').catch(() => {});
+
+// Server-side error (SSR mode)
+throw new Error('Test server error'); // In a server route
 ```
 
 Logs are saved to `logs/DD.MM.YYYY.txt` (e.g., `logs/20.05.2025.txt`) with entries like:
@@ -54,16 +56,25 @@ Logs are saved to `logs/DD.MM.YYYY.txt` (e.g., `logs/20.05.2025.txt`) with entri
 ```json
 {"time":"12:27:00","type":"error","value":["Test error"]}
 {"time":"12:27:00","type":"http_error","value":[{"url":"https://example.com/nonexistent","method":"GET","status":404,"statusText":"Not Found","error":"Not found"}]}
+{"time":"12:27:00","type":"server_error","value":[{"url":"/api/test","method":"GET","error":"Test server error"}]}
 ```
 
 ### HTTP Error Tracking
-The module automatically logs HTTP request errors for all `fetch` calls, including:
+The module automatically logs HTTP request errors for all `fetch` calls on the client, including:
 - Non-2xx status codes (e.g., 404, 500).
 - Network errors (e.g., connection failures).
 
 Example HTTP error log:
 ```json
 {"time":"12:27:00","type":"http_error","value":[{"url":"https://example.com/api/nonexistent","method":"POST","status":404,"statusText":"Not Found","error":"Not found"}]}
+```
+
+### Server Error Tracking (SSR)
+In SSR mode (`ssr: true`), the module captures server-side errors via Nitro middleware, logging details like URL, method, and error message.
+
+Example server error log:
+```json
+{"time":"12:27:00","type":"server_error","value":[{"url":"/api/test","method":"GET","error":"Test server error"}]}
 ```
 
 ## Configuration Options
@@ -83,7 +94,7 @@ export default defineNuxtConfig({
     locale: 'en',
     logPath: './custom_logs'
   },
-  ssr: false
+  ssr: true
 });
 ```
 
@@ -91,32 +102,54 @@ export default defineNuxtConfig({
 
 - Node.js >= 18 (ESM support required)
 - Nuxt 3 >= 3.17.3
-- TypeScript >= 5.4.5
+- TypeScript >= 5.6.2
 - `"type": "module"` in `package.json`
 - `moduleResolution: "nodenext"` in `tsconfig.json`
+- Peer dependencies: `@nuxt/kit@^3.17.3`, `@nuxt/schema@^3.17.3`, `h3@^1.12.0`
 
 ## Troubleshooting
 
-- **Module not found**: Ensure `@nuxt/kit`, `@nuxt/schema`, and `h3` are installed as peer dependencies and included in `tsconfig.json` under `types`:
-  ```json
-  "types": ["@nuxt/kit", "@nuxt/schema", "@types/node"]
-  ```
+- **Build errors (e.g., TypeScript issues)**:
+    - Ensure `tsconfig.json` includes:
+      ```json
+      "types": ["@nuxt/kit", "@nuxt/schema", "@types/node"]
+      ```
+    - Run `npm install` to verify dependencies.
+    - Check build logs:
+      ```bash
+      npm run build:js:tsc
+      ls dist
+      ```
 
-- **No logs written**: Verify the `apiEndpoint` is correct and the server route (`/api/logging`) is accessible. Test with:
-  ```bash
-  curl -X POST http://localhost:3000/api/logging -d '{"text":"{\"time\":\"12:00:00\",\"type\":\"error\",\"value\":[\"test\"]}"}}' -H "Content-Type: application/json"
-  ```
+- **Runtime error: "Cannot read properties of undefined (reading 'logging')"**:
+    - Verify `nuxt.config.ts` includes the `logging` key.
+    - Check console output for debug logs:
+      ```bash
+      pnpm dev
+      ```
+      Look for `Module setup - runtimeConfig.public.logging` and `Plugin - config.public`.
+    - Clear Nuxt cache:
+      ```bash
+      rm -rf /path/to/test-project/.nuxt
+      pnpm dev
+      ```
 
-- **Recursive HTTP error logs**: Ensure `lib/plugin.ts` skips logging for the `apiEndpoint` URL. Check for errors like `"\"[object Object]\" is not valid JSON"` in `/api/logging` responses.
+- **No logs written**:
+    - Test the API endpoint:
+      ```bash
+      curl -X POST http://localhost:3000/api/logging -d '{"text":"{\"time\":\"12:00:00\",\"type\":\"error\",\"value\":[\"test\"]}"}}' -H "Content-Type: application/json"
+      ```
+    - Ensure `logPath` is writable and `apiEndpoint` is correct.
 
-- **TypeScript errors**: Use `.js` extensions for relative imports in ESM modules (e.g., `import { useSaveLogs } from './composables/useSaveLogs.js'`).
+- **Recursive HTTP error logs**:
+    - Verify `lib/plugin.ts` skips logging for `apiEndpoint` requests to prevent recursion.
+    - Check server logs for JSON parsing errors.
 
-- **Build issues**: If only some `.js` files are generated, run:
-  ```bash
-  npm run build:js:tsc
-  ls dist
-  ```
-  Check `esbuild` logs with `--log-level=debug`.
+- **Missing server error logs in SSR**:
+    - Ensure `lib/server/middleware/logErrors.ts` is included in the build:
+      ```bash
+      ls dist/server/middleware
+      ```
 
 ## Development
 
@@ -143,12 +176,20 @@ export default defineNuxtConfig({
    pnpm dev
    ```
 
-5. Test HTTP error logging:
+5. Test logging functionality:
    ```vue
    <template>
-     <button @click="triggerHttpError">Trigger HTTP Error</button>
+     <div>
+       <button @click="triggerError">Trigger Console Error</button>
+       <button @click="triggerHttpError">Trigger HTTP Error</button>
+       <button @click="triggerServerError">Trigger Server Error</button>
+     </div>
    </template>
    <script setup>
+   const triggerError = () => {
+     console.error('Test error');
+   };
+
    const triggerHttpError = async () => {
      try {
        await fetch('https://jsonplaceholder.typicode.com/nonexistent');
@@ -156,14 +197,30 @@ export default defineNuxtConfig({
        console.log('HTTP error:', error);
      }
    };
+
+   const triggerServerError = async () => {
+     try {
+       await fetch('/api/test');
+     } catch (error) {
+       console.log('Server error:', error);
+     }
+   };
    </script>
    ```
 
+   Add a test server route (`server/api/test.ts`):
+   ```typescript
+   import { defineEventHandler } from 'h3';
+
+   export default defineEventHandler(() => {
+     throw new Error('Test server error');
+   });
+   ```
+
 ## Future Scope
-- **Server-Side Rendering (SSR) Support**: Add compatibility with SSR for Nitro server routes, addressing current client-only limitations.
 - **Log Format Customization**: Support configurable log formats (e.g., JSON, CSV, plain text) and log rotation policies.
 - **External Log Aggregation**: Integrate with services like Elasticsearch or Logstash for centralized log management.
-- **Batch Logging**: Implement batch processing to reduce API calls and improve performance in high-traffic applications.
+- **Batch Logging**: Implement batch processing to reduce API calls in high-traffic applications.
 
 ## License
 
