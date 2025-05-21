@@ -1,3 +1,7 @@
+# Build files
+.dist
+*.tgz
+
 # Node dependencies
 node_modules
 

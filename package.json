@@ -1,25 +1,29 @@
 {
   "name": "nuxt-logging-to-file-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "lib"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@nuxt/kit": "^3.17.3",
     "@nuxt/schema": "^3.17.3",
     "h3": "^1.12.0"
   },
   "devDependencies": {
-    "@types/node": "^22.7.4",
-    "typescript": "^5.6.2"
+    "@nuxt/kit": "^3.17.3",
+    "@nuxt/schema": "^3.17.3",
+    "h3": "^1.12.0",
+    "typescript": "^5.6.2",
+    "@types/node": "^22.7.4"
   },
   "keywords": [
     "nuxt",
@@ -27,6 +31,11 @@
     "logging",
     "module"
   ],
+  "description": "A Nuxt 3 module for logging console.warn and console.error messages to a server endpoint and saving them to files, no ssr.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/whostolemysleep/nuxt-logging-to-file-plugin.git"
+  },
   "author": "Naumenko Konstantin",
   "license": "MIT"
 }
