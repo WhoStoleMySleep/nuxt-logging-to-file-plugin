@@ -11,8 +11,7 @@
     "types": ["@nuxt/kit", "@nuxt/schema", "@types/node"],
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "noEmit": false,
-    "sourceMap": false
+    "noEmit": false
   },
   "include": ["lib/**/*"],
   "exclude": ["node_modules", "dist"]

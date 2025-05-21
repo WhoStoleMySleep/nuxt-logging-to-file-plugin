@@ -3,7 +3,7 @@ import { useSaveLogs } from './composables/useSaveLogs.js';
 
 interface LogData {
   time: string;
-  type: 'warn' | 'error';
+  type: 'warn' | 'error' | 'http_error';
   value: any[];
 }
 
@@ -59,9 +59,60 @@ export default defineNuxtPlugin((nuxtApp: NuxtApp) => {
 
   const defaultWarn = console.warn.bind(console);
   const defaultError = console.error.bind(console);
+  const defaultFetch = globalThis.fetch.bind(globalThis);
 
   console.warn = createLogMethod('warn', defaultWarn, options);
   console.error = createLogMethod('error', defaultError, options);
+
+  globalThis.fetch = async (...args) => {
+    const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0].url || 'unknown';
+    const method = args[1]?.method || 'GET';
+
+    // Skip logging for requests to the logging endpoint to prevent recursion
+    const normalizedUrl = url.replace(/^https?:\/\/[^/]+/, '');
+    if (normalizedUrl.startsWith(options.apiEndpoint)) {
+      return defaultFetch(...args);
+    }
+
+    try {
+      const response = await defaultFetch(...args);
+      if (!response.ok) {
+        const errorData = {
+          url,
+          method,
+          status: response.status,
+          statusText: response.statusText,
+          error: await response.text().catch(() => 'No response body'),
+        };
+        console.log('Logging http_error:', errorData); // Debug
+        await useSaveLogs(
+          {
+            time: createTimestamp(options.locale),
+            type: 'http_error',
+            value: [errorData],
+          },
+          options.apiEndpoint
+        );
+      }
+      return response;
+    } catch (error) {
+      const errorData = {
+        url,
+        method,
+        error: error instanceof Error ? error.message : 'Unknown network error',
+      };
+      console.log('Logging network error:', errorData); // Debug
+      await useSaveLogs(
+        {
+          time: createTimestamp(options.locale),
+          type: 'http_error',
+          value: [errorData],
+        },
+        options.apiEndpoint
+      );
+      throw error;
+    }
+  };
 
   return {
     provide: {

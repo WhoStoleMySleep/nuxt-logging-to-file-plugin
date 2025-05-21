@@ -1,21 +1,28 @@
-export function useSaveLogs(logText: { time: string; type: string; value: any }, apiEndpoint: string) {
-  let value = 'url' in logText.value
-    ? logText.value
-    : Array.from(logText.value).filter((item: any) => typeof item === 'string');
+export interface LogData {
+  time: string;
+  type: string;
+  value: any[];
+}
 
-  delete logText?.value;
+export async function useSaveLogs(logText: LogData, apiEndpoint: string) {
+  if (!logText.value || !logText.value.length) {
+    console.warn('Skipping empty log:', logText);
+    return;
+  }
 
-  if (value) {
-    return fetch(apiEndpoint, {
+  try {
+    console.log('useSaveLogs sending:', JSON.stringify(logText));
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text: JSON.stringify({
-          ...logText,
-          value
-        })
-      })
-    }).catch((error) => {
-      console.error('Failed to send log:', error);
+        text: JSON.stringify(logText),
+      }),
     });
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Failed to send log:', error);
   }
 }
