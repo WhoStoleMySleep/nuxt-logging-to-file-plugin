@@ -12,7 +12,6 @@ export default defineEventHandler(async (event) => {
       return { error: 'Text is required' };
     }
 
-    // Attempt to parse text as JSON for validation
     let logData;
     try {
       logData = JSON.parse(text);

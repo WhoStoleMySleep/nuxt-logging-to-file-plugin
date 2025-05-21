@@ -12,7 +12,7 @@
   "scripts": {
     "build": "npm run clean && npm run build:types && npm run build:js",
     "build:types": "tsc --emitDeclarationOnly",
-    "build:js": "esbuild lib/index.ts lib/plugin.ts lib/composables/useSaveLogs.ts lib/server/api/logging.ts --minify --platform=node --format=esm --outdir=dist --log-level=debug --tsconfig=tsconfig.json",
+    "build:js": "esbuild lib/index.ts lib/plugin.ts lib/composables/useSaveLogs.ts lib/server/api/logging.ts lib/server/middleware/logErrors.ts --minify --platform=node --format=esm --outdir=dist --log-level=debug --tsconfig=tsconfig.json",
     "build:js:tsc": "tsc --noEmit false --declaration false",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
@@ -25,15 +25,21 @@
   "devDependencies": {
     "@nuxt/kit": "^3.17.3",
     "@nuxt/schema": "^3.17.3",
+    "@types/node": "^22.15.21",
+    "esbuild": "^0.23.0",
     "h3": "^1.12.0",
-    "typescript": "^5.6.2",
-    "@types/node": "^22.7.4",
-    "esbuild": "^0.23.0"
+    "typescript": "^5.6.2"
   },
-  "keywords": ["nuxt", "nuxt3", "logging", "module"],
+  "keywords": [
+    "nuxt",
+    "nuxt3",
+    "logging",
+    "module",
+    "ssr"
+  ],
   "author": "Naumenko Konstantin",
   "license": "MIT",
-  "description": "A Nuxt 3 module for logging errors, warnings, and HTTP request errors to a file",
+  "description": "A Nuxt 3 module for logging errors, warnings, and HTTP request errors to a file, with SSR support",
   "repository": {
     "type": "git",
     "url": "https://github.com/whostolemysleep/nuxt-logging-to-file-plugin.git"
