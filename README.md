@@ -117,6 +117,13 @@ export default defineNuxtConfig({
    npm link nuxt-logging-to-file-plugin
    ```
 
+## Future Scope
+- Server-Side Rendering (SSR) Support: Add full compatibility with SSR to ensure seamless logging in SSR-enabled Nuxt applications, addressing current limitations with Nitro server routes.
+- Request Logging: Extend functionality to log HTTP requests (e.g., method, URL, status code) alongside console logs, providing comprehensive debugging capabilities.
+- Enhanced Customizability: Introduce options for log format customization (e.g., JSON, CSV, or plain text), log rotation policies, and filtering by log severity or type.
+- Log Aggregation: Support for sending logs to external services (e.g., Elasticsearch, Logstash) for centralized log management.
+- Performance Optimization: Implement batch logging to reduce API calls and improve performance in high-traffic applications.
+
 ## License
 
 MIT License
